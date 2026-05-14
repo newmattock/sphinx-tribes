@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -84,11 +87,62 @@ func handleTimingError(w http.ResponseWriter, operation string, err error) {
 //	@Success		200	{array}	db.Bounty
 //	@Router			/gobounties/all [get]
 func (h *bountyHandler) GetAllBounties(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Query().Get("myAssigned") == "true" {
+		pubKey, err := getAuthenticatedPubKey(r)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+		r = r.WithContext(context.WithValue(r.Context(), auth.ContextKey, pubKey))
+	}
+
 	bounties := h.db.GetAllBounties(r)
 	var bountyResponse []db.BountyResponse = h.GenerateBountyResponse(bounties)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(bountyResponse)
+}
+
+func getAuthenticatedPubKey(r *http.Request) (string, error) {
+	if pubKey, ok := r.Context().Value(auth.ContextKey).(string); ok &&
+		pubKey != "" &&
+		pubKey != config.SWAuth {
+		return pubKey, nil
+	}
+
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		token = r.Header.Get("x-jwt")
+	}
+	if token == "" {
+		return "", errors.New("missing auth token")
+	}
+
+	isJwt := strings.Contains(token, ".") && !strings.HasPrefix(token, ".")
+	if isJwt {
+		claims, err := auth.DecodeJwt(token)
+		if err != nil {
+			return "", err
+		}
+		if !claims.VerifyExpiresAt(time.Now().Unix(), true) {
+			return "", errors.New("token has expired")
+		}
+		pubKey, ok := claims["pubkey"].(string)
+		if !ok || pubKey == "" {
+			return "", errors.New("missing pubkey claim")
+		}
+		return pubKey, nil
+	}
+
+	pubKey, err := auth.VerifyTribeUUID(token, true)
+	if err != nil || pubKey == "" {
+		if err != nil {
+			return "", err
+		}
+		return "", errors.New("missing pubkey")
+	}
+
+	return pubKey, nil
 }
 
 // GetBountyById godoc

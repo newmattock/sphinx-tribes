@@ -1209,6 +1209,7 @@ func (db database) GetAllBounties(r *http.Request) []NewBounty {
 	paid := keys.Get("Paid")
 	pending := keys.Get("Pending")
 	failed := keys.Get("Failed")
+	myAssigned := keys.Get("myAssigned")
 	orgUuid := keys.Get("org_uuid")
 	workspaceUuid := keys.Get("workspace_uuid")
 	languages := keys.Get("languages")
@@ -1232,6 +1233,7 @@ func (db database) GetAllBounties(r *http.Request) []NewBounty {
 	phaseUuidQuery := ""
 	phasePriorityQuery := ""
 	accessRestrictionQuery := ""
+	myAssignedQuery := ""
 
 	if sortBy != "" && direction != "" {
 		orderQuery = "ORDER BY " + sortBy + " " + direction
@@ -1252,9 +1254,18 @@ func (db database) GetAllBounties(r *http.Request) []NewBounty {
 	if PhasePriority != "" {
 		phasePriorityQuery = "AND phase_priority = '" + PhasePriority + "'"
 	}
-	
+
 	if accessRestriction != "" {
 		accessRestrictionQuery = fmt.Sprintf("AND access_restriction = '%s'", accessRestriction)
+	}
+
+	if myAssigned == "true" {
+		if pubKey, ok := r.Context().Value(auth.ContextKey).(string); ok && pubKey != "" {
+			myAssignedQuery = fmt.Sprintf(
+				"AND assignee = '%s'",
+				strings.ReplaceAll(pubKey, "'", "''"),
+			)
+		}
 	}
 
 	var statusConditions []string
@@ -1304,7 +1315,7 @@ func (db database) GetAllBounties(r *http.Request) []NewBounty {
 
 	query := "SELECT * FROM public.bounty WHERE show != false"
 
-	allQuery := query + " " + statusQuery + " " + searchQuery + " " + workspaceQuery + " " + languageQuery + " " + phaseUuidQuery + " " + phasePriorityQuery + " " + accessRestrictionQuery + " " + orderQuery + " " + limitQuery
+	allQuery := query + " " + statusQuery + " " + searchQuery + " " + workspaceQuery + " " + languageQuery + " " + phaseUuidQuery + " " + phasePriorityQuery + " " + accessRestrictionQuery + " " + myAssignedQuery + " " + orderQuery + " " + limitQuery
 
 	theQuery := db.db.Raw(allQuery)
 
