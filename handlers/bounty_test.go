@@ -1165,7 +1165,7 @@ func TestGetBountyIndexById(t *testing.T) {
 			OwnerID:       bountyOwner.OwnerPubKey,
 			Show:          true,
 			Created:       now,
-			MaxStakers: 1,
+			MaxStakers:    1,
 		}
 
 		db.TestDB.CreateOrEditBounty(bounty)

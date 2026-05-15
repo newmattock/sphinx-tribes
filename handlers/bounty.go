@@ -2857,14 +2857,14 @@ func (h *bountyHandler) GetBountiesByWorkspaceTime(w http.ResponseWriter, r *htt
 func (h *bountyHandler) CreateBountyStake(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	pubKeyFromAuth, _ := ctx.Value(auth.ContextKey).(string)
-	
+
 	if pubKeyFromAuth == "" {
 		logger.Log.Error("[bounty_stake] no pubkey from auth")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
 		return
 	}
-	
+
 	var stake db.BountyStake
 	if err := json.NewDecoder(r.Body).Decode(&stake); err != nil {
 		logger.Log.Error("[bounty_stake] invalid request body: %v", err)
@@ -2872,9 +2872,9 @@ func (h *bountyHandler) CreateBountyStake(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request body"})
 		return
 	}
-	
+
 	stake.HunterPubKey = pubKeyFromAuth
-	
+
 	createdStake, err := h.db.CreateBountyStake(stake)
 	if err != nil {
 		logger.Log.Error("[bounty_stake] failed to create stake: %v", err)
@@ -2882,7 +2882,7 @@ func (h *bountyHandler) CreateBountyStake(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(createdStake)
 }
@@ -2904,7 +2904,7 @@ func (h *bountyHandler) GetAllBountyStakes(w http.ResponseWriter, r *http.Reques
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to retrieve stakes"})
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(stakes)
 }
@@ -2929,7 +2929,7 @@ func (h *bountyHandler) GetBountyStakesByBountyID(w http.ResponseWriter, r *http
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid bounty ID"})
 		return
 	}
-	
+
 	stakes, err := h.db.GetBountyStakesByBountyID(bountyID)
 	if err != nil {
 		logger.Log.Error("[bounty_stake] failed to get stakes by bounty ID: %v", err)
@@ -2937,7 +2937,7 @@ func (h *bountyHandler) GetBountyStakesByBountyID(w http.ResponseWriter, r *http
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to retrieve stakes"})
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(stakes)
 }
@@ -2963,7 +2963,7 @@ func (h *bountyHandler) GetBountyStakeByID(w http.ResponseWriter, r *http.Reques
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid stake ID"})
 		return
 	}
-	
+
 	stake, err := h.db.GetBountyStakeByID(id)
 	if err != nil {
 		logger.Log.Error("[bounty_stake] failed to get stake by ID: %v", err)
@@ -2971,7 +2971,7 @@ func (h *bountyHandler) GetBountyStakeByID(w http.ResponseWriter, r *http.Reques
 		json.NewEncoder(w).Encode(map[string]string{"error": "Stake not found"})
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(stake)
 }
@@ -2988,7 +2988,7 @@ func (h *bountyHandler) GetBountyStakeByID(w http.ResponseWriter, r *http.Reques
 //	@Router			/gobounties/stake/hunter/{hunterPubKey} [get]
 func (h *bountyHandler) GetBountyStakesByHunterPubKey(w http.ResponseWriter, r *http.Request) {
 	hunterPubKey := chi.URLParam(r, "hunterPubKey")
-	
+
 	stakes, err := h.db.GetBountyStakesByHunterPubKey(hunterPubKey)
 	if err != nil {
 		logger.Log.Error("[bounty_stake] failed to get stakes by hunter pubkey: %v", err)
@@ -2996,7 +2996,7 @@ func (h *bountyHandler) GetBountyStakesByHunterPubKey(w http.ResponseWriter, r *
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to retrieve stakes"})
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(stakes)
 }
@@ -3020,14 +3020,14 @@ func (h *bountyHandler) GetBountyStakesByHunterPubKey(w http.ResponseWriter, r *
 func (h *bountyHandler) UpdateBountyStake(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	pubKeyFromAuth, _ := ctx.Value(auth.ContextKey).(string)
-	
+
 	if pubKeyFromAuth == "" {
 		logger.Log.Error("[bounty_stake] no pubkey from auth")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
 		return
 	}
-	
+
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -3036,7 +3036,7 @@ func (h *bountyHandler) UpdateBountyStake(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid stake ID"})
 		return
 	}
-	
+
 	existingStake, err := h.db.GetBountyStakeByID(id)
 	if err != nil {
 		logger.Log.Error("[bounty_stake] stake not found: %v", err)
@@ -3044,7 +3044,7 @@ func (h *bountyHandler) UpdateBountyStake(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(map[string]string{"error": "Stake not found"})
 		return
 	}
-	
+
 	bounty := h.db.GetBounty(existingStake.BountyID)
 	if existingStake.HunterPubKey != pubKeyFromAuth && bounty.OwnerID != pubKeyFromAuth {
 		logger.Log.Error("[bounty_stake] unauthorized update attempt")
@@ -3052,7 +3052,7 @@ func (h *bountyHandler) UpdateBountyStake(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(map[string]string{"error": "You are not authorized to update this stake"})
 		return
 	}
-	
+
 	var updates map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		logger.Log.Error("[bounty_stake] invalid request body: %v", err)
@@ -3060,7 +3060,7 @@ func (h *bountyHandler) UpdateBountyStake(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request body"})
 		return
 	}
-	
+
 	updatedStake, err := h.db.UpdateBountyStake(id, updates)
 	if err != nil {
 		logger.Log.Error("[bounty_stake] failed to update stake: %v", err)
@@ -3068,7 +3068,7 @@ func (h *bountyHandler) UpdateBountyStake(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(updatedStake)
 }
@@ -3090,14 +3090,14 @@ func (h *bountyHandler) UpdateBountyStake(w http.ResponseWriter, r *http.Request
 func (h *bountyHandler) DeleteBountyStake(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	pubKeyFromAuth, _ := ctx.Value(auth.ContextKey).(string)
-	
+
 	if pubKeyFromAuth == "" {
 		logger.Log.Error("[bounty_stake] no pubkey from auth")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
 		return
 	}
-	
+
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -3106,7 +3106,7 @@ func (h *bountyHandler) DeleteBountyStake(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid stake ID"})
 		return
 	}
-	
+
 	existingStake, err := h.db.GetBountyStakeByID(id)
 	if err != nil {
 		logger.Log.Error("[bounty_stake] stake not found: %v", err)
@@ -3114,7 +3114,7 @@ func (h *bountyHandler) DeleteBountyStake(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(map[string]string{"error": "Stake not found"})
 		return
 	}
-	
+
 	bounty := h.db.GetBounty(existingStake.BountyID)
 	if existingStake.HunterPubKey != pubKeyFromAuth && bounty.OwnerID != pubKeyFromAuth {
 		logger.Log.Error("[bounty_stake] unauthorized delete attempt")
@@ -3122,7 +3122,7 @@ func (h *bountyHandler) DeleteBountyStake(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(map[string]string{"error": "You are not authorized to delete this stake"})
 		return
 	}
-	
+
 	err = h.db.DeleteBountyStake(id)
 	if err != nil {
 		logger.Log.Error("[bounty_stake] failed to delete stake: %v", err)
@@ -3130,7 +3130,7 @@ func (h *bountyHandler) DeleteBountyStake(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Stake deleted successfully"})
 }
@@ -3152,14 +3152,14 @@ func (h *bountyHandler) DeleteBountyStake(w http.ResponseWriter, r *http.Request
 func (h *bountyHandler) CreateBountyStakeProcess(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	pubKeyFromAuth, _ := ctx.Value(auth.ContextKey).(string)
-	
+
 	if pubKeyFromAuth == "" {
 		logger.Log.Error("[bounty_stake_process] no pubkey from auth")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
 		return
 	}
-	
+
 	var process db.BountyStakeProcess
 	if err := json.NewDecoder(r.Body).Decode(&process); err != nil {
 		logger.Log.Error("[bounty_stake_process] invalid request body: %v", err)
@@ -3167,11 +3167,11 @@ func (h *bountyHandler) CreateBountyStakeProcess(w http.ResponseWriter, r *http.
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request body"})
 		return
 	}
-	
+
 	process.HunterPubKey = pubKeyFromAuth
-	
+
 	process.Status = db.StakeProcessStatusNew
-	
+
 	createdProcess, err := h.db.CreateBountyStakeProcess(&process)
 	if err != nil {
 		logger.Log.Error("[bounty_stake_process] failed to create stake process: %v", err)
@@ -3179,7 +3179,7 @@ func (h *bountyHandler) CreateBountyStakeProcess(w http.ResponseWriter, r *http.
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(createdProcess)
 }
@@ -3198,14 +3198,14 @@ func (h *bountyHandler) CreateBountyStakeProcess(w http.ResponseWriter, r *http.
 func (h *bountyHandler) GetAllBountyStakeProcesses(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	pubKeyFromAuth, _ := ctx.Value(auth.ContextKey).(string)
-	
+
 	if pubKeyFromAuth == "" {
 		logger.Log.Error("[bounty_stake_process] no pubkey from auth")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
 		return
 	}
-	
+
 	processes, err := h.db.GetAllBountyStakeProcesses()
 	if err != nil {
 		logger.Log.Error("[bounty_stake_process] failed to get stake processes: %v", err)
@@ -3213,7 +3213,7 @@ func (h *bountyHandler) GetAllBountyStakeProcesses(w http.ResponseWriter, r *htt
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to retrieve stake processes"})
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(processes)
 }
@@ -3235,14 +3235,14 @@ func (h *bountyHandler) GetAllBountyStakeProcesses(w http.ResponseWriter, r *htt
 func (h *bountyHandler) GetBountyStakeProcessByID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	pubKeyFromAuth, _ := ctx.Value(auth.ContextKey).(string)
-	
+
 	if pubKeyFromAuth == "" {
 		logger.Log.Error("[bounty_stake_process] no pubkey from auth")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
 		return
 	}
-	
+
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -3251,7 +3251,7 @@ func (h *bountyHandler) GetBountyStakeProcessByID(w http.ResponseWriter, r *http
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid process ID"})
 		return
 	}
-	
+
 	process, err := h.db.GetBountyStakeProcessByID(id)
 	if err != nil {
 		logger.Log.Error("[bounty_stake_process] failed to get process by ID: %v", err)
@@ -3259,7 +3259,7 @@ func (h *bountyHandler) GetBountyStakeProcessByID(w http.ResponseWriter, r *http
 		json.NewEncoder(w).Encode(map[string]string{"error": "Stake process not found"})
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(process)
 }
@@ -3283,14 +3283,14 @@ func (h *bountyHandler) GetBountyStakeProcessByID(w http.ResponseWriter, r *http
 func (h *bountyHandler) UpdateBountyStakeProcess(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	pubKeyFromAuth, _ := ctx.Value(auth.ContextKey).(string)
-	
+
 	if pubKeyFromAuth == "" {
 		logger.Log.Error("[bounty_stake_process] no pubkey from auth")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
 		return
 	}
-	
+
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -3299,7 +3299,7 @@ func (h *bountyHandler) UpdateBountyStakeProcess(w http.ResponseWriter, r *http.
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid process ID"})
 		return
 	}
-	
+
 	existingProcess, err := h.db.GetBountyStakeProcessByID(id)
 	if err != nil {
 		logger.Log.Error("[bounty_stake_process] process not found: %v", err)
@@ -3307,7 +3307,7 @@ func (h *bountyHandler) UpdateBountyStakeProcess(w http.ResponseWriter, r *http.
 		json.NewEncoder(w).Encode(map[string]string{"error": "Stake process not found"})
 		return
 	}
-	
+
 	bounty := h.db.GetBounty(existingProcess.BountyID)
 	if existingProcess.HunterPubKey != pubKeyFromAuth && bounty.OwnerID != pubKeyFromAuth {
 		logger.Log.Error("[bounty_stake_process] unauthorized update attempt")
@@ -3315,7 +3315,7 @@ func (h *bountyHandler) UpdateBountyStakeProcess(w http.ResponseWriter, r *http.
 		json.NewEncoder(w).Encode(map[string]string{"error": "You are not authorized to update this stake process"})
 		return
 	}
-	
+
 	var updates map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		logger.Log.Error("[bounty_stake_process] invalid request body: %v", err)
@@ -3323,7 +3323,7 @@ func (h *bountyHandler) UpdateBountyStakeProcess(w http.ResponseWriter, r *http.
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request body"})
 		return
 	}
-	
+
 	updatedProcess, err := h.db.UpdateBountyStakeProcess(id, updates)
 	if err != nil {
 		logger.Log.Error("[bounty_stake_process] failed to update process: %v", err)
@@ -3331,7 +3331,7 @@ func (h *bountyHandler) UpdateBountyStakeProcess(w http.ResponseWriter, r *http.
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(updatedProcess)
 }
@@ -3353,14 +3353,14 @@ func (h *bountyHandler) UpdateBountyStakeProcess(w http.ResponseWriter, r *http.
 func (h *bountyHandler) DeleteBountyStakeProcess(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	pubKeyFromAuth, _ := ctx.Value(auth.ContextKey).(string)
-	
+
 	if pubKeyFromAuth == "" {
 		logger.Log.Error("[bounty_stake_process] no pubkey from auth")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
 		return
 	}
-	
+
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -3369,7 +3369,7 @@ func (h *bountyHandler) DeleteBountyStakeProcess(w http.ResponseWriter, r *http.
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid process ID"})
 		return
 	}
-	
+
 	existingProcess, err := h.db.GetBountyStakeProcessByID(id)
 	if err != nil {
 		logger.Log.Error("[bounty_stake_process] process not found: %v", err)
@@ -3377,7 +3377,7 @@ func (h *bountyHandler) DeleteBountyStakeProcess(w http.ResponseWriter, r *http.
 		json.NewEncoder(w).Encode(map[string]string{"error": "Stake process not found"})
 		return
 	}
-	
+
 	bounty := h.db.GetBounty(existingProcess.BountyID)
 	if existingProcess.HunterPubKey != pubKeyFromAuth && bounty.OwnerID != pubKeyFromAuth {
 		logger.Log.Error("[bounty_stake_process] unauthorized delete attempt")
@@ -3385,7 +3385,7 @@ func (h *bountyHandler) DeleteBountyStakeProcess(w http.ResponseWriter, r *http.
 		json.NewEncoder(w).Encode(map[string]string{"error": "You are not authorized to delete this stake process"})
 		return
 	}
-	
+
 	err = h.db.DeleteBountyStakeProcess(id)
 	if err != nil {
 		logger.Log.Error("[bounty_stake_process] failed to delete process: %v", err)
@@ -3393,7 +3393,7 @@ func (h *bountyHandler) DeleteBountyStakeProcess(w http.ResponseWriter, r *http.
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Stake process deleted successfully"})
 }
